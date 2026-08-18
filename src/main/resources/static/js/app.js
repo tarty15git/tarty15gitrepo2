@@ -224,52 +224,105 @@ async function renderPhasesTab() {
                         </tbody>
                     </table>
                 `}
-                <div style="margin-top: 15px;">
-                    <button class="btn btn-primary" onclick="openSubmitModal(${phase.id})">+ Submit Deliverable</button>
-                </div>
             </div>
         `;
     });
     html += `</div>`;
 
+    // Inline Submission Form Section directly below phases
+    html += `
+        <div class="card" style="margin-top: 30px; border-top: 4px solid var(--primary-light);">
+            <h3>Submit Deliverable Document</h3>
+            <p style="font-size: 12px; color: #64748b;">Fill in all relevant fields below and attach document to submit directly to the platform.</p>
+
+            <form id="inline-submit-form" onsubmit="handleInlineSubmit(event)">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="input-group">
+                        <label>Application Code (3-Character)</label>
+                        <input type="text" id="sub-app-code" value="CTH" maxlength="3" required style="text-transform: uppercase;">
+                    </div>
+                    <div class="input-group">
+                        <label>Target Phase</label>
+                        <select id="sub-phase-id" required>
+                            ${phases.map(p => `<option value="${p.id}">Phase ${p.phaseNumber}: ${p.phaseName}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Document Code</label>
+                        <input type="text" id="sub-doc-code" placeholder="e.g. DOC-SPEC-01" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div class="input-group">
+                        <label>Document Title</label>
+                        <input type="text" id="sub-doc-title" placeholder="e.g. Architecture Design Specification" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Version Number</label>
+                        <input type="text" id="sub-version" value="1.0" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Description</label>
+                    <textarea id="sub-description" rows="3" placeholder="Enter document scope or deliverable details..."></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label>Attach Deliverable File (.docx, .xlsx, .pptx, .xml, .pdf)</label>
+                    <input type="file" id="sub-file" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">Submit Deliverable Document</button>
+            </form>
+        </div>
+    `;
+
     document.getElementById('tab-content').innerHTML = html;
 }
 
-function openSubmitModal(phaseId) {
-    const title = prompt("Enter Document Title:");
-    if (!title) return;
-    const docCode = prompt("Enter Document Code (e.g., DOC-SPEC-01):", "DOC-SPEC-01");
-    if (!docCode) return;
+async function handleInlineSubmit(event) {
+    event.preventDefault();
 
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.onchange = async () => {
-        const file = fileInput.files[0];
-        if (!file) return;
+    const appCode = document.getElementById('sub-app-code').value.toUpperCase();
+    const phaseId = document.getElementById('sub-phase-id').value;
+    const docCode = document.getElementById('sub-doc-code').value;
+    const docTitle = document.getElementById('sub-doc-title').value;
+    const versionNumber = document.getElementById('sub-version').value;
+    const description = document.getElementById('sub-description').value;
+    const fileInput = document.getElementById('sub-file');
 
-        const formData = new FormData();
-        formData.append('appCode', 'CTH');
-        formData.append('phaseId', phaseId);
-        formData.append('documentTitle', title);
-        formData.append('documentCode', docCode);
-        formData.append('versionNumber', '1.0');
-        formData.append('description', 'Standard deliverable submission');
-        formData.append('file', file);
+    if (!fileInput.files || fileInput.files.length === 0) {
+        alert("Please select a file to upload.");
+        return;
+    }
 
+    const formData = new FormData();
+    formData.append('appCode', appCode);
+    formData.append('phaseId', phaseId);
+    formData.append('documentTitle', docTitle);
+    formData.append('documentCode', docCode);
+    formData.append('versionNumber', versionNumber);
+    formData.append('description', description);
+    formData.append('file', fileInput.files[0]);
+
+    try {
         const res = await fetch('/api/sdm/documents/submit', {
             method: 'POST',
             body: formData
         });
 
         if (res.ok) {
-            alert('Document submitted successfully!');
+            alert('Document deliverable submitted successfully!');
             renderPhasesTab();
         } else {
             const data = await res.json();
-            alert('Submission failed: ' + data.error);
+            alert('Submission failed: ' + (data.error || 'Server error'));
         }
-    };
-    fileInput.click();
+    } catch (e) {
+        alert('Error submitting document: ' + e.message);
+    }
 }
 
 async function renderApprovalsTab() {
