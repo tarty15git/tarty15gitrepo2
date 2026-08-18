@@ -1,0 +1,7 @@
+target/
+*.log
+*.pid
+sdm_storage/
+sdm_templates/
+watch_drop_folder/
+.DS_Store

@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      - MODEL_CHAT=${MODEL_CHAT:-llama3.2:latest}
+      - MODEL_EMBED=${MODEL_EMBED:-nomic-embed-text}
+    volumes:
+      - faiss_data:/app/faiss_store
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  faiss_data:
