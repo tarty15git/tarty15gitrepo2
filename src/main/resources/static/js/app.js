@@ -389,8 +389,8 @@ async function renderApprovalsTab() {
 }
 
 async function processApprovalAction(docId, action) {
-    const remarks = prompt(`Enter remarks for ${action}:`, "Standard Maker-Checker verification completed.");
-    if (remarks === null) return;
+    const remarkInput = document.getElementById(`remarks-${docId}`);
+    const remarks = remarkInput ? remarkInput.value : "Standard Maker-Checker verification completed.";
 
     const res = await fetch(`/api/sdm/documents/${docId}/approval`, {
         method: 'POST',
@@ -597,7 +597,7 @@ async function renderAdminTab() {
             body: JSON.stringify(payload)
         });
 
-        if (res.ok) alert('Configurations saved!');
+        if (res.ok) showAlert('Configurations saved successfully!', 'success');
     });
 }
 
@@ -607,16 +607,14 @@ async function toggleUserLock(userId) {
 }
 
 async function resetUserPassword(userId) {
-    const password = prompt("Enter new password:");
-    if (!password) return;
-
+    const newPassword = "ResetPassword123!";
     const res = await fetch(`/api/admin/users/${userId}/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
+        body: JSON.stringify({ password: newPassword })
     });
 
-    if (res.ok) alert("Password reset successfully!");
+    if (res.ok) showAlert(`Password reset successfully for user ID ${userId}. Temporary password: ${newPassword}`, 'success');
 }
 
 async function handleLogout() {
