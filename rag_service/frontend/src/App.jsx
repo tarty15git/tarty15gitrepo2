@@ -10,6 +10,7 @@ export default function App() {
   const [chatModel, setChatModel] = useState('llama3.2:latest');
   const [embedModel, setEmbedModel] = useState('nomic-embed-text');
   const [selectedDocRecs, setSelectedDocRecs] = useState(null);
+  const [ragAlert, setRagAlert] = useState(null);
 
   const fetchIndexStatus = async () => {
     try {
@@ -41,14 +42,14 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message);
+        setRagAlert({ type: 'success', text: data.message });
         setSelectedFile(null);
         fetchIndexStatus();
       } else {
-        alert("Upload error: " + data.error);
+        setRagAlert({ type: 'danger', text: "Upload error: " + data.error });
       }
     } catch (err) {
-      alert("Failed to upload document: " + err.message);
+      setRagAlert({ type: 'danger', text: "Failed to upload document: " + err.message });
     }
   };
 
@@ -113,6 +114,12 @@ export default function App() {
   return (
     <div style={{ fontFamily: 'sans-serif', padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <h1>SDME Local RAG Service (Docling + FAISS + Ollama)</h1>
+
+      {ragAlert && (
+        <div style={{ padding: '10px 15px', borderRadius: '6px', marginBottom: '15px', fontWeight: 'bold', backgroundColor: ragAlert.type === 'success' ? '#dcfce7' : '#fee2e2', color: ragAlert.type === 'success' ? '#166534' : '#991b1b' }}>
+          {ragAlert.text}
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
         <div>
