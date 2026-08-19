@@ -70,6 +70,14 @@ public class UserService {
         return saved;
     }
 
+    public void deleteUser(Long userId) {
+        AppUser user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if ("admin".equalsIgnoreCase(user.getUsername())) {
+            throw new IllegalArgumentException("Cannot delete default admin user");
+        }
+        userRepository.delete(user);
+    }
+
     public void triggerNotification(String type, AppUser user, String message) {
         boolean smsEnabled = configService.getBooleanConfig("NOTIF_SMS_ENABLED", false);
         boolean emailEnabled = configService.getBooleanConfig("NOTIF_EMAIL_ENABLED", false);

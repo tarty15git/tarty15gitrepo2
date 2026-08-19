@@ -104,7 +104,7 @@ async function renderAppView() {
                 <button class="tab-btn" onclick="switchTab('phases', this)">SDM Deliverable Phases</button>
                 <button class="tab-btn" onclick="switchTab('approvals', this)">Maker-Checker Approvals</button>
                 <button class="tab-btn" onclick="switchTab('reports', this)">Reports & Analytics</button>
-                <button class="tab-btn" onclick="switchTab('ai-agents', this)">Anthropic AI Agents</button>
+                <button class="tab-btn" onclick="switchTab('ai-agents', this)">Agents</button>
                 ${currentUser.role === 'ADMIN' ? '<button class="tab-btn" onclick="switchTab(\'admin\', this)">Admin Setup & Templates</button>' : ''}
             </div>
 
@@ -136,6 +136,29 @@ function switchTab(tabName, btn) {
     else if (tabName === 'reports') renderReportsTab();
     else if (tabName === 'ai-agents') renderAiAgentsTab();
     else if (tabName === 'admin') renderAdminTab();
+}
+
+function openInAppDocumentViewer(docId, docTitle) {
+    const container = document.getElementById('tab-content');
+    const viewerHtml = `
+        <div class="card" style="border-top: 4px solid var(--primary-light);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div>
+                    <h3 style="margin: 0;">In-Page Document Viewer: ${docTitle}</h3>
+                    <span style="font-size: 12px; color: #64748b;">Viewing document directly within embedded webpage frame in original format</span>
+                </div>
+                <div>
+                    <a href="/api/sdm/documents/${docId}/download" class="btn btn-success" style="text-decoration: none;">Download Original File</a>
+                    <button class="btn btn-primary" onclick="renderPhasesTab()">Close Viewer</button>
+                </div>
+            </div>
+            <div style="width: 100%; height: 600px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #f8fafc;">
+                <iframe src="/api/sdm/documents/${docId}/view" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+    `;
+    container.innerHTML = viewerHtml;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function renderDashboardTab() {
@@ -192,7 +215,7 @@ async function renderDashboardTab() {
                             <td><span class="badge badge-${d.status.toLowerCase().replace('_approval', '')}">${d.status}</span></td>
                             <td>${d.makerUsername}</td>
                             <td>
-                                <a href="/api/sdm/documents/${d.id}/view" target="_blank" class="btn btn-primary" style="padding: 4px 8px; text-decoration: none;">View</a>
+                                <button class="btn btn-primary" style="padding: 4px 8px;" onclick="openInAppDocumentViewer(${d.id}, '${d.documentTitle.replace(/'/g, "\\'")}')">View Doc</button>
                                 <a href="/api/sdm/documents/${d.id}/download" class="btn btn-success" style="padding: 4px 8px; text-decoration: none;">Download</a>
                                 <button class="btn btn-primary" style="padding: 4px 8px;" onclick="triggerAiReview(${d.id})">AI Review</button>
                             </td>
@@ -287,7 +310,7 @@ async function renderPhasesTab() {
                                     <td>${d.documentCode}</td>
                                     <td><span class="badge badge-${d.status.toLowerCase().replace('_approval', '')}">${d.status}</span></td>
                                     <td>
-                                        <a href="/api/sdm/documents/${d.id}/view" target="_blank" class="btn btn-primary" style="padding: 2px 6px; text-decoration: none; font-size: 11px;">View</a>
+                                        <button class="btn btn-primary" style="padding: 2px 6px; font-size: 11px;" onclick="openInAppDocumentViewer(${d.id}, '${d.documentTitle.replace(/'/g, "\\'")}')">View</button>
                                         <a href="/api/sdm/documents/${d.id}/download" class="btn btn-success" style="padding: 2px 6px; text-decoration: none; font-size: 11px;">Download</a>
                                     </td>
                                 </tr>
@@ -375,7 +398,7 @@ async function renderApprovalsTab() {
                             <td>${d.makerUsername}</td>
                             <td>${d.createdAt}</td>
                             <td>
-                                <a href="/api/sdm/documents/${d.id}/view" target="_blank" class="btn btn-primary" style="padding: 4px 8px; text-decoration: none;">View Doc</a>
+                                <button class="btn btn-primary" style="padding: 4px 8px;" onclick="openInAppDocumentViewer(${d.id}, '${d.documentTitle.replace(/'/g, "\\'")}')">View Doc</button>
                                 <a href="/api/sdm/documents/${d.id}/download" class="btn btn-success" style="padding: 4px 8px; text-decoration: none;">Download</a>
                                 <button class="btn btn-success" onclick="processApprovalAction(${d.id}, 'APPROVE')">Approve</button>
                                 <button class="btn btn-danger" onclick="processApprovalAction(${d.id}, 'REJECT')">Reject</button>
@@ -458,13 +481,13 @@ async function renderReportsTab() {
 }
 
 async function triggerAiReview(docId) {
-    showAlert("Triggering 4 Anthropic AI Agents Pipeline...", "success");
+    showAlert("Triggering 4 AI Agents Pipeline...", "success");
     const res = await fetch(`/api/ai/agents/process/${docId}`, { method: 'POST' });
     if (res.ok) {
-        showAlert("AI Pipeline Execution Complete!", "success");
+        showAlert("Agents Pipeline Execution Complete!", "success");
         renderAiAgentsTab(docId);
     } else {
-        showAlert("AI Pipeline Execution Failed.", "danger");
+        showAlert("Agents Pipeline Execution Failed.", "danger");
     }
 }
 
@@ -481,15 +504,15 @@ async function renderAiAgentsTab(selectedDocId = null) {
 
     document.getElementById('tab-content').innerHTML = `
         <div class="card">
-            <h3>Anthropic AI Agents Framework - SDM Deliverable Processing</h3>
-            <p style="font-size: 12px; color: #64748b;">Delegated AI pipeline featuring Document Processor, Result Drafter, Reviewer (Hard Gates), and Log Integrity Auditor agents.</p>
+            <h3>Agents Framework - SDM Deliverable Processing</h3>
+            <p style="font-size: 12px; color: #64748b;">Delegated AI agent framework featuring Document Processor, Result Drafter, Reviewer (Hard Gates), and Log Integrity Auditor agents.</p>
 
             <div style="margin-bottom: 15px;">
                 <label style="font-size: 12px; font-weight: bold;">Select Document to Inspect Agent Reviews:</label>
                 <select onchange="renderAiAgentsTab(this.value)" style="padding: 6px; width: 300px;">
                     ${docs.map(d => `<option value="${d.id}" ${d.id == docId ? 'selected' : ''}>${d.docIdCode} - ${d.documentTitle}</option>`).join('')}
                 </select>
-                <button class="btn btn-primary" onclick="triggerAiReview(${docId})">Run AI Agents</button>
+                <button class="btn btn-primary" onclick="triggerAiReview(${docId})">Run Agents</button>
             </div>
         </div>
 
@@ -516,6 +539,41 @@ async function renderAdminTab() {
     const users = uRes.ok ? await uRes.json() : [];
 
     document.getElementById('tab-content').innerHTML = `
+        <div class="card">
+            <h3>Add New System User</h3>
+            <form id="create-user-form" onsubmit="handleCreateUser(event)">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="input-group">
+                        <label>Username</label>
+                        <input type="text" id="new-user-name" placeholder="e.g. maker2" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="new-user-pass" placeholder="e.g. User123!" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Role</label>
+                        <select id="new-user-role" required>
+                            <option value="MAKER">MAKER</option>
+                            <option value="CHECKER">CHECKER</option>
+                            <option value="ADMIN">ADMIN</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="new-user-fullname" placeholder="e.g. John Doe" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" id="new-user-email" placeholder="e.g. john@cth.com" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">+ Create User Account</button>
+            </form>
+        </div>
+
         <div class="card">
             <h3>System Toggles & Configuration Setup</h3>
             <form id="config-form">
@@ -572,8 +630,9 @@ async function renderAdminTab() {
                             <td>${u.role}</td>
                             <td>${u.locked ? '<span class="badge badge-rejected">LOCKED</span>' : '<span class="badge badge-approved">ACTIVE</span>'}</td>
                             <td>
-                                <button class="btn btn-danger" onclick="toggleUserLock(${u.id})">${u.locked ? 'Unlock' : 'Lock'}</button>
-                                <button class="btn btn-primary" onclick="resetUserPassword(${u.id})">Reset Password</button>
+                                <button class="btn btn-primary" onclick="toggleUserLock(${u.id})">${u.locked ? 'Unlock' : 'Lock'}</button>
+                                <button class="btn btn-primary" onclick="resetUserPassword(${u.id})">Reset Pass</button>
+                                <button class="btn btn-danger" onclick="deleteUserAccount(${u.id})">Delete</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -599,6 +658,42 @@ async function renderAdminTab() {
 
         if (res.ok) showAlert('Configurations saved successfully!', 'success');
     });
+}
+
+async function handleCreateUser(e) {
+    e.preventDefault();
+    const payload = {
+        username: document.getElementById('new-user-name').value,
+        password: document.getElementById('new-user-pass').value,
+        role: document.getElementById('new-user-role').value,
+        fullName: document.getElementById('new-user-fullname').value,
+        email: document.getElementById('new-user-email').value
+    };
+
+    const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+        showAlert(`User account ${payload.username} created successfully!`, 'success');
+        renderAdminTab();
+    } else {
+        const data = await res.json();
+        showAlert('User creation failed: ' + data.error, 'danger');
+    }
+}
+
+async function deleteUserAccount(userId) {
+    const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+    if (res.ok) {
+        showAlert('User account deleted successfully.', 'success');
+        renderAdminTab();
+    } else {
+        const data = await res.json();
+        showAlert('Delete failed: ' + data.error, 'danger');
+    }
 }
 
 async function toggleUserLock(userId) {
