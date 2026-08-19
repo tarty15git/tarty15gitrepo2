@@ -88,7 +88,7 @@ async function renderAppView() {
         <div class="container">
             <div class="nav-tabs">
                 <button class="tab-btn active" onclick="switchTab('dashboard', this)">Dashboard</button>
-                <button class="tab-btn" onclick="switchTab('phases', this)">7 SDM Deliverable Phases</button>
+                <button class="tab-btn" onclick="switchTab('phases', this)">SDM Deliverable Phases</button>
                 <button class="tab-btn" onclick="switchTab('approvals', this)">Maker-Checker Approvals</button>
                 <button class="tab-btn" onclick="switchTab('reports', this)">Reports & Analytics</button>
                 <button class="tab-btn" onclick="switchTab('ai-agents', this)">Anthropic AI Agents</button>
@@ -179,7 +179,9 @@ async function renderDashboardTab() {
                             <td><span class="badge badge-${d.status.toLowerCase().replace('_approval', '')}">${d.status}</span></td>
                             <td>${d.makerUsername}</td>
                             <td>
-                                <button class="btn btn-primary" onclick="triggerAiReview(${d.id})">AI Pipeline Review</button>
+                                <a href="/api/sdm/documents/${d.id}/view" target="_blank" class="btn btn-primary" style="padding: 4px 8px; text-decoration: none;">View</a>
+                                <a href="/api/sdm/documents/${d.id}/download" class="btn btn-success" style="padding: 4px 8px; text-decoration: none;">Download</a>
+                                <button class="btn btn-primary" style="padding: 4px 8px;" onclick="triggerAiReview(${d.id})">AI Review</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -219,6 +221,10 @@ async function renderPhasesTab() {
                                     <td>${d.documentTitle}</td>
                                     <td>${d.documentCode}</td>
                                     <td><span class="badge badge-${d.status.toLowerCase().replace('_approval', '')}">${d.status}</span></td>
+                                    <td>
+                                        <a href="/api/sdm/documents/${d.id}/view" target="_blank" class="btn btn-primary" style="padding: 2px 6px; text-decoration: none; font-size: 11px;">View</a>
+                                        <a href="/api/sdm/documents/${d.id}/download" class="btn btn-success" style="padding: 2px 6px; text-decoration: none; font-size: 11px;">Download</a>
+                                    </td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -354,6 +360,8 @@ async function renderApprovalsTab() {
                             <td>${d.makerUsername}</td>
                             <td>${d.createdAt}</td>
                             <td>
+                                <a href="/api/sdm/documents/${d.id}/view" target="_blank" class="btn btn-primary" style="padding: 4px 8px; text-decoration: none;">View Doc</a>
+                                <a href="/api/sdm/documents/${d.id}/download" class="btn btn-success" style="padding: 4px 8px; text-decoration: none;">Download</a>
                                 <button class="btn btn-success" onclick="processApprovalAction(${d.id}, 'APPROVE')">Approve</button>
                                 <button class="btn btn-danger" onclick="processApprovalAction(${d.id}, 'REJECT')">Reject</button>
                             </td>

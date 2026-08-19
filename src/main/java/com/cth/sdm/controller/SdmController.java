@@ -94,6 +94,41 @@ public class SdmController {
         return ResponseEntity.ok(approvalRepository.findByDocumentIdOrderByTimestampDesc(id));
     }
 
+    @GetMapping("/documents/{id}/download")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadDocument(@PathVariable Long id) throws java.io.IOException {
+        SdmDocument doc = sdmService.getDocumentsByFilter(null, null, null).stream()
+                .filter(d -> d.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Document not found: " + id));
+
+        java.nio.file.Path path = java.nio.file.Paths.get(doc.getFilePath());
+        org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(path.toUri());
+
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + doc.getDocumentTitle() + "." + doc.getFileType() + "\"")
+                .body(resource);
+    }
+
+    @GetMapping("/documents/{id}/view")
+    public ResponseEntity<org.springframework.core.io.Resource> viewDocument(@PathVariable Long id) throws java.io.IOException {
+        SdmDocument doc = sdmService.getDocumentsByFilter(null, null, null).stream()
+                .filter(d -> d.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Document not found: " + id));
+
+        java.nio.file.Path path = java.nio.file.Paths.get(doc.getFilePath());
+        org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(path.toUri());
+
+        String contentType = "application/octet-stream";
+        if ("pdf".equalsIgnoreCase(doc.getFileType())) contentType = "application/pdf";
+        else if ("xml".equalsIgnoreCase(doc.getFileType())) contentType = "application/xml";
+
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + doc.getDocumentTitle() + "." + doc.getFileType() + "\"")
+                .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
+                .body(resource);
+    }
+
     @GetMapping("/audit-logs")
     public ResponseEntity<List<AuditLog>> getAuditLogs() {
         return ResponseEntity.ok(auditLogRepository.findAllByOrderByTimestampDesc());
