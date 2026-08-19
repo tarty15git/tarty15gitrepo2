@@ -71,6 +71,17 @@ function togglePasswordVisibility() {
     }
 }
 
+function showAlert(message, type = 'success') {
+    const alertBox = document.getElementById('status-alert');
+    if (!alertBox) return;
+    alertBox.style.display = 'block';
+    alertBox.style.backgroundColor = type === 'success' ? '#dcfce7' : '#fee2e2';
+    alertBox.style.color = type === 'success' ? '#166534' : '#991b1b';
+    alertBox.style.border = `1px solid ${type === 'success' ? '#86efac' : '#fca5a5'}`;
+    alertBox.innerText = message;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 async function renderAppView() {
     await loadInitialData();
 
@@ -86,6 +97,8 @@ async function renderAppView() {
         </header>
 
         <div class="container">
+            <div id="status-alert" style="display: none; padding: 12px 20px; border-radius: 6px; margin-bottom: 20px; font-weight: 600; font-size: 14px;"></div>
+
             <div class="nav-tabs">
                 <button class="tab-btn active" onclick="switchTab('dashboard', this)">Dashboard</button>
                 <button class="tab-btn" onclick="switchTab('phases', this)">SDM Deliverable Phases</button>
@@ -195,49 +208,9 @@ async function renderPhasesTab() {
     const dRes = await fetch('/api/sdm/documents');
     const docs = dRes.ok ? await dRes.json() : [];
 
-    let html = `<div class="phase-grid">`;
-    phases.forEach(phase => {
-        const phaseDocs = docs.filter(d => d.phase.id === phase.id);
-        html += `
-            <div class="phase-frame">
-                <h3>Phase ${phase.phaseNumber}: ${phase.phaseName}</h3>
-                <p style="font-size: 12px; color: #64748b;">${phase.description}</p>
-
-                <h4 style="margin-top: 15px;">Deliverable Documents</h4>
-                ${phaseDocs.length === 0 ? '<p style="font-size: 12px; color: #94a3b8;">No documents submitted for this phase.</p>' : `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Doc ID</th>
-                                <th>Title</th>
-                                <th>Code</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${phaseDocs.map(d => `
-                                <tr>
-                                    <td><strong>${d.docIdCode}</strong></td>
-                                    <td>${d.documentTitle}</td>
-                                    <td>${d.documentCode}</td>
-                                    <td><span class="badge badge-${d.status.toLowerCase().replace('_approval', '')}">${d.status}</span></td>
-                                    <td>
-                                        <a href="/api/sdm/documents/${d.id}/view" target="_blank" class="btn btn-primary" style="padding: 2px 6px; text-decoration: none; font-size: 11px;">View</a>
-                                        <a href="/api/sdm/documents/${d.id}/download" class="btn btn-success" style="padding: 2px 6px; text-decoration: none; font-size: 11px;">Download</a>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `}
-            </div>
-        `;
-    });
-    html += `</div>`;
-
-    // Inline Submission Form Section directly below phases
-    html += `
-        <div class="card" style="margin-top: 30px; border-top: 4px solid var(--primary-light);">
+    // Inline Submission Form Section directly at the TOP
+    let html = `
+        <div class="card" style="margin-bottom: 25px; border-top: 4px solid var(--primary-light);">
             <h3>Submit Deliverable Document</h3>
             <p style="font-size: 12px; color: #64748b;">Fill in all relevant fields below and attach document to submit directly to the platform.</p>
 
@@ -285,6 +258,48 @@ async function renderPhasesTab() {
         </div>
     `;
 
+    // Phase frames grid beneath submission section
+    html += `<div class="phase-grid">`;
+    phases.forEach(phase => {
+        const phaseDocs = docs.filter(d => d.phase.id === phase.id);
+        html += `
+            <div class="phase-frame">
+                <h3>Phase ${phase.phaseNumber}: ${phase.phaseName}</h3>
+                <p style="font-size: 12px; color: #64748b;">${phase.description}</p>
+
+                <h4 style="margin-top: 15px;">Deliverable Documents</h4>
+                ${phaseDocs.length === 0 ? '<p style="font-size: 12px; color: #94a3b8;">No documents submitted for this phase.</p>' : `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Doc ID</th>
+                                <th>Title</th>
+                                <th>Code</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${phaseDocs.map(d => `
+                                <tr>
+                                    <td><strong>${d.docIdCode}</strong></td>
+                                    <td>${d.documentTitle}</td>
+                                    <td>${d.documentCode}</td>
+                                    <td><span class="badge badge-${d.status.toLowerCase().replace('_approval', '')}">${d.status}</span></td>
+                                    <td>
+                                        <a href="/api/sdm/documents/${d.id}/view" target="_blank" class="btn btn-primary" style="padding: 2px 6px; text-decoration: none; font-size: 11px;">View</a>
+                                        <a href="/api/sdm/documents/${d.id}/download" class="btn btn-success" style="padding: 2px 6px; text-decoration: none; font-size: 11px;">Download</a>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `}
+            </div>
+        `;
+    });
+    html += `</div>`;
+
     document.getElementById('tab-content').innerHTML = html;
 }
 
@@ -300,7 +315,7 @@ async function handleInlineSubmit(event) {
     const fileInput = document.getElementById('sub-file');
 
     if (!fileInput.files || fileInput.files.length === 0) {
-        alert("Please select a file to upload.");
+        showAlert("Please select a file to upload.", "danger");
         return;
     }
 
@@ -320,14 +335,14 @@ async function handleInlineSubmit(event) {
         });
 
         if (res.ok) {
-            alert('Document deliverable submitted successfully!');
+            showAlert('Document deliverable submitted successfully!', "success");
             renderPhasesTab();
         } else {
             const data = await res.json();
-            alert('Submission failed: ' + (data.error || 'Server error'));
+            showAlert('Submission failed: ' + (data.error || 'Server error'), "danger");
         }
     } catch (e) {
-        alert('Error submitting document: ' + e.message);
+        showAlert('Error submitting document: ' + e.message, "danger");
     }
 }
 
@@ -384,11 +399,11 @@ async function processApprovalAction(docId, action) {
     });
 
     if (res.ok) {
-        alert(`Document ${action.toLowerCase()}d successfully.`);
+        showAlert(`Document ${action.toLowerCase()}d successfully.`, "success");
         renderApprovalsTab();
     } else {
         const data = await res.json();
-        alert('Action failed: ' + data.error);
+        showAlert('Action failed: ' + data.error, "danger");
     }
 }
 
@@ -443,13 +458,13 @@ async function renderReportsTab() {
 }
 
 async function triggerAiReview(docId) {
-    alert("Triggering 4 Anthropic AI Agents Pipeline...");
+    showAlert("Triggering 4 Anthropic AI Agents Pipeline...", "success");
     const res = await fetch(`/api/ai/agents/process/${docId}`, { method: 'POST' });
     if (res.ok) {
-        alert("AI Pipeline Execution Complete! Switching to AI Agents tab.");
+        showAlert("AI Pipeline Execution Complete!", "success");
         renderAiAgentsTab(docId);
     } else {
-        alert("AI Pipeline Execution Failed.");
+        showAlert("AI Pipeline Execution Failed.", "danger");
     }
 }
 
