@@ -137,7 +137,7 @@ async function renderAppView() {
             <div class="nav-tabs">
                 <button class="tab-btn active" onclick="switchTab('dashboard', this)">Dashboard</button>
                 <button class="tab-btn" onclick="switchTab('phases', this)">SDM Deliverable Phases</button>
-                <button class="tab-btn" onclick="switchTab('approvals', this)">Maker-Checker Approvals</button>
+                <button class="tab-btn" onclick="switchTab('approvals', this)">Approvals</button>
                 <button class="tab-btn" onclick="switchTab('reports', this)">Reports & Analytics</button>
                 <button class="tab-btn" onclick="switchTab('ai-agents', this)">Agents</button>
                 ${currentUser.role === 'ADMIN' ? '<button class="tab-btn" onclick="switchTab(\'admin\', this)">Admin Setup & Templates</button>' : ''}
@@ -194,7 +194,7 @@ function openInAppDocumentViewer(docId, docTitle) {
                 </div>
                 <div>
                     <a href="/api/sdm/documents/${docId}/download" class="btn btn-success" style="text-decoration: none;">Download Original File</a>
-                    <button class="btn btn-primary" onclick="renderPhasesTab()">Close Viewer</button>
+                    <button class="btn btn-primary" onclick="refreshCurrentTab()">Close Viewer</button>
                 </div>
             </div>
             <div style="width: 100%; height: 600px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #f8fafc;">
@@ -422,7 +422,7 @@ async function renderApprovalsTab() {
 
     document.getElementById('tab-content').innerHTML = `
         <div class="card">
-            <h3>Maker-Checker Approvals (Hard Gate Sign-off)</h3>
+            <h3>Approvals (Hard Gate Sign-off)</h3>
             <table>
                 <thead>
                     <tr>
