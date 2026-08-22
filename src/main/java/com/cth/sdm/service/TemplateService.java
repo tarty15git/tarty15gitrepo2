@@ -41,7 +41,7 @@ public class TemplateService {
     }
 
     public DocumentTemplate uploadTemplate(Long phaseId, String templateCode, String documentTitle,
-                                           String versionNumber, String description, MultipartFile file) throws IOException {
+                                           String versionNumber, String description, String uploadedBy, MultipartFile file) throws IOException {
         SdmPhase phase = phaseRepository.findById(phaseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Phase ID: " + phaseId));
 
@@ -60,6 +60,7 @@ public class TemplateService {
         template.setPhase(phase);
         template.setVersionNumber(versionNumber != null ? versionNumber : "1.0");
         template.setDescription(description);
+        template.setUploadedBy(uploadedBy != null && !uploadedBy.isBlank() ? uploadedBy : "admin");
         template.setFilePath(destFile.getAbsolutePath());
         template.setCreatedAt(LocalDateTime.now());
         template.setUpdatedAt(LocalDateTime.now());

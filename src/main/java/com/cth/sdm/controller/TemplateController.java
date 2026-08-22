@@ -46,9 +46,10 @@ public class TemplateController {
                                              @RequestParam("documentTitle") String documentTitle,
                                              @RequestParam(value = "versionNumber", defaultValue = "1.0") String versionNumber,
                                              @RequestParam(value = "description", required = false) String description,
+                                             @RequestParam(value = "uploadedBy", defaultValue = "admin") String uploadedBy,
                                              @RequestParam("file") MultipartFile file) {
         try {
-            DocumentTemplate template = templateService.uploadTemplate(phaseId, templateCode, documentTitle, versionNumber, description, file);
+            DocumentTemplate template = templateService.uploadTemplate(phaseId, templateCode, documentTitle, versionNumber, description, uploadedBy, file);
             return ResponseEntity.ok(Map.of("success", true, "message", "Template uploaded successfully", "template", template));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "error", e.getMessage()));

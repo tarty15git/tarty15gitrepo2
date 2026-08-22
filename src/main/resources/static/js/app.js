@@ -677,6 +677,9 @@ async function renderAdminTab() {
                             <th>Target Phase</th>
                             <th>Title</th>
                             <th>Version</th>
+                            <th>Uploaded By</th>
+                            <th>Last Uploaded</th>
+                            <th>Document Timestamp</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -687,6 +690,9 @@ async function renderAdminTab() {
                                 <td>Phase ${t.phase ? t.phase.phaseNumber : '-'}: ${t.phase ? t.phase.phaseName : '-'}</td>
                                 <td>${t.documentTitle}</td>
                                 <td>${t.versionNumber}</td>
+                                <td>${t.uploadedBy || 'admin'}</td>
+                                <td>${t.updatedAt || t.createdAt}</td>
+                                <td>${t.createdAt}</td>
                                 <td>
                                     <a href="/api/sdm/templates/${t.id}/download" class="btn btn-primary" style="padding: 4px 8px; text-decoration: none;">Download</a>
                                     <button class="btn btn-danger" style="padding: 4px 8px;" onclick="handleDeleteTemplate(${t.id})">Delete</button>
@@ -1008,6 +1014,7 @@ async function handleUploadTemplate(e) {
     formData.append('documentTitle', documentTitle);
     formData.append('versionNumber', versionNumber);
     formData.append('description', description);
+    formData.append('uploadedBy', currentUser ? currentUser.username : 'admin');
     formData.append('file', fileInput.files[0]);
 
     try {
