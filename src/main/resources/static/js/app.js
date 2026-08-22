@@ -72,6 +72,17 @@ function togglePasswordVisibility() {
     }
 }
 
+function toggleAdminPasswordVisibility() {
+    const pwdInput = document.getElementById('new-user-pass');
+    if (pwdInput) {
+        if (pwdInput.type === 'password') {
+            pwdInput.type = 'text';
+        } else {
+            pwdInput.type = 'password';
+        }
+    }
+}
+
 function showAlert(message, type = 'success') {
     const alertBox = document.getElementById('status-alert');
     if (!alertBox) return;
@@ -585,13 +596,73 @@ async function renderAiAgentsTab(selectedDocId = null) {
 }
 
 async function renderAdminTab() {
-    const cRes = await fetch('/api/config');
-    const configs = cRes.ok ? await cRes.json() : {};
+    const [cRes, uRes, rRes] = await Promise.all([
+        fetch('/api/config'),
+        fetch('/api/admin/users'),
+        fetch('/api/admin/roles')
+    ]);
 
-    const uRes = await fetch('/api/admin/users');
+    const configs = cRes.ok ? await cRes.json() : {};
     const users = uRes.ok ? await uRes.json() : [];
+    const roles = rRes.ok ? await rRes.json() : [];
 
     document.getElementById('tab-content').innerHTML = `
+        <div class="card">
+            <h3>Role Management (Add / Amend / Delete System Roles & Permitted Actions)</h3>
+            <form id="create-role-form" onsubmit="handleCreateRole(event)" style="margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; margin-bottom: 10px;">
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Role Code / Name</label>
+                        <input type="text" id="new-role-name" placeholder="e.g. AUDITOR" required style="text-transform: uppercase;">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Description</label>
+                        <input type="text" id="new-role-desc" placeholder="e.g. Compliance & Security Auditor" required>
+                    </div>
+                </div>
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <label>Permitted Actions / Permissions</label>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; font-size: 12px; margin-top: 5px;">
+                        <label><input type="checkbox" name="new-role-action" value="SUBMIT_DOC" checked> Submit Deliverable</label>
+                        <label><input type="checkbox" name="new-role-action" value="APPROVE_DOC"> Approve Deliverable</label>
+                        <label><input type="checkbox" name="new-role-action" value="DELETE_DOC"> Delete Deliverable</label>
+                        <label><input type="checkbox" name="new-role-action" value="EXPORT_REPORT" checked> Export Reports</label>
+                        <label><input type="checkbox" name="new-role-action" value="MANAGE_USERS"> Manage Users</label>
+                        <label><input type="checkbox" name="new-role-action" value="MANAGE_ROLES"> Manage Roles</label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">+ Add Role</button>
+            </form>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Role Name</th>
+                        <th>Description</th>
+                        <th>Permitted Actions</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${roles.map(r => `
+                        <tr>
+                            <td><strong>${r.roleName}</strong></td>
+                            <td>
+                                <input type="text" id="role-desc-${r.id}" value="${r.description || ''}" style="width: 100%; padding: 4px;">
+                            </td>
+                            <td>
+                                <input type="text" id="role-actions-${r.id}" value="${r.permittedActions || ''}" style="width: 100%; padding: 4px;" placeholder="SUBMIT_DOC,VIEW_DOC">
+                            </td>
+                            <td>
+                                <button class="btn btn-primary" onclick="handleAmendRole(${r.id})">Amend Role</button>
+                                ${['ADMIN', 'MAKER', 'CHECKER'].includes(r.roleName) ? '' : `<button class="btn btn-danger" onclick="handleDeleteRole(${r.id})">Delete</button>`}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+
         <div class="card">
             <h3>Add New System User</h3>
             <form id="create-user-form" onsubmit="handleCreateUser(event)">
@@ -602,14 +673,15 @@ async function renderAdminTab() {
                     </div>
                     <div class="input-group">
                         <label>Password</label>
-                        <input type="password" id="new-user-pass" placeholder="e.g. User123!" required>
+                        <div class="password-wrapper">
+                            <input type="password" id="new-user-pass" placeholder="e.g. User123!" required>
+                            <span class="password-toggle-eye" onclick="toggleAdminPasswordVisibility()">👁️</span>
+                        </div>
                     </div>
                     <div class="input-group">
                         <label>Role</label>
                         <select id="new-user-role" required>
-                            <option value="MAKER">MAKER</option>
-                            <option value="CHECKER">CHECKER</option>
-                            <option value="ADMIN">ADMIN</option>
+                            ${roles.map(r => `<option value="${r.roleName}">${r.roleName}</option>`).join('')}
                         </select>
                     </div>
                 </div>
@@ -711,6 +783,62 @@ async function renderAdminTab() {
 
         if (res.ok) showAlert('Configurations saved successfully!', 'success');
     });
+}
+
+async function handleCreateRole(e) {
+    e.preventDefault();
+    const checkedActions = Array.from(document.querySelectorAll('input[name="new-role-action"]:checked')).map(cb => cb.value);
+    const payload = {
+        roleName: document.getElementById('new-role-name').value.toUpperCase(),
+        description: document.getElementById('new-role-desc').value,
+        permittedActions: checkedActions.join(',')
+    };
+
+    const res = await fetch('/api/admin/roles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+        showAlert(`Role ${payload.roleName} added successfully!`, 'success');
+        renderAdminTab();
+    } else {
+        const data = await res.json();
+        showAlert('Role creation failed: ' + data.error, 'danger');
+    }
+}
+
+async function handleAmendRole(roleId) {
+    const descInput = document.getElementById(`role-desc-${roleId}`);
+    const actionsInput = document.getElementById(`role-actions-${roleId}`);
+    const newDescription = descInput ? descInput.value : '';
+    const newActions = actionsInput ? actionsInput.value : '';
+
+    const res = await fetch(`/api/admin/roles/${roleId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: newDescription, permittedActions: newActions })
+    });
+
+    if (res.ok) {
+        showAlert('Role amended successfully!', 'success');
+        renderAdminTab();
+    } else {
+        const data = await res.json();
+        showAlert('Amend role failed: ' + data.error, 'danger');
+    }
+}
+
+async function handleDeleteRole(roleId) {
+    const res = await fetch(`/api/admin/roles/${roleId}`, { method: 'DELETE' });
+    if (res.ok) {
+        showAlert('Role deleted successfully.', 'success');
+        renderAdminTab();
+    } else {
+        const data = await res.json();
+        showAlert('Role deletion failed: ' + data.error, 'danger');
+    }
 }
 
 async function handleCreateUser(e) {

@@ -17,15 +17,17 @@ public class RoleService {
 
     @PostConstruct
     public void initSeedRoles() {
-        seedRoleIfAbsent("ADMIN", "System Administrator with full access rights");
-        seedRoleIfAbsent("MAKER", "Deliverable document creator and submitter");
-        seedRoleIfAbsent("CHECKER", "Approver responsible for sign-off hard gates");
-        seedRoleIfAbsent("USER", "Read-only system viewer");
+        seedRoleIfAbsent("ADMIN", "System Administrator with full access rights", "SUBMIT_DOC,APPROVE_DOC,DELETE_DOC,EXPORT_REPORT,MANAGE_USERS,MANAGE_ROLES");
+        seedRoleIfAbsent("MAKER", "Deliverable document creator and submitter", "SUBMIT_DOC,VIEW_DOC,EXPORT_REPORT");
+        seedRoleIfAbsent("CHECKER", "Approver responsible for sign-off hard gates", "APPROVE_DOC,VIEW_DOC,EXPORT_REPORT");
+        seedRoleIfAbsent("USER", "Read-only system viewer", "VIEW_DOC,EXPORT_REPORT");
     }
 
-    private void seedRoleIfAbsent(String name, String desc) {
+    private void seedRoleIfAbsent(String name, String desc, String defaultActions) {
         if (!roleRepository.existsByRoleName(name)) {
-            roleRepository.save(new AppRole(name, desc));
+            AppRole r = new AppRole(name, desc);
+            r.setPermittedActions(defaultActions);
+            roleRepository.save(r);
         }
     }
 
@@ -33,18 +35,23 @@ public class RoleService {
         return roleRepository.findAll();
     }
 
-    public AppRole createRole(String roleName, String description) {
+    public AppRole createRole(String roleName, String description, String permittedActions) {
         String upperName = roleName.toUpperCase().trim();
         if (roleRepository.existsByRoleName(upperName)) {
             throw new IllegalArgumentException("Role already exists: " + upperName);
         }
-        return roleRepository.save(new AppRole(upperName, description));
+        AppRole role = new AppRole(upperName, description);
+        if (permittedActions != null && !permittedActions.isBlank()) {
+            role.setPermittedActions(permittedActions);
+        }
+        return roleRepository.save(role);
     }
 
-    public AppRole updateRole(Long roleId, String newDescription) {
+    public AppRole updateRole(Long roleId, String newDescription, String permittedActions) {
         AppRole role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleId));
-        role.setDescription(newDescription);
+        if (newDescription != null) role.setDescription(newDescription);
+        if (permittedActions != null) role.setPermittedActions(permittedActions);
         role.setUpdatedAt(LocalDateTime.now());
         return roleRepository.save(role);
     }

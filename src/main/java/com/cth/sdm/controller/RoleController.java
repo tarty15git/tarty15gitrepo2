@@ -28,7 +28,8 @@ public class RoleController {
         try {
             String roleName = payload.get("roleName");
             String description = payload.get("description");
-            AppRole created = roleService.createRole(roleName, description);
+            String permittedActions = payload.get("permittedActions");
+            AppRole created = roleService.createRole(roleName, description, permittedActions);
             return ResponseEntity.ok(created);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -39,7 +40,8 @@ public class RoleController {
     public ResponseEntity<?> updateRole(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         try {
             String description = payload.get("description");
-            AppRole updated = roleService.updateRole(id, description);
+            String permittedActions = payload.get("permittedActions");
+            AppRole updated = roleService.updateRole(id, description, permittedActions);
             return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

@@ -17,6 +17,9 @@ public class AppRole {
     @Column(length = 255)
     private String description;
 
+    @Column(length = 500)
+    private String permittedActions = "SUBMIT_DOC,VIEW_DOC,EXPORT_REPORT";
+
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
@@ -35,6 +38,9 @@ public class AppRole {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getPermittedActions() { return permittedActions; }
+    public void setPermittedActions(String permittedActions) { this.permittedActions = permittedActions; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
