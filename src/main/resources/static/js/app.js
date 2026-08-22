@@ -85,11 +85,16 @@ function showAlert(message, type = 'success') {
 
 function showDeleteConfirmationBanner(docId) {
     const confirmHtml = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span><strong>Confirmation Required:</strong> Are you sure you want to delete document ID #${docId}? This action cannot be undone.</span>
-            <div>
-                <button class="btn btn-danger" style="padding: 4px 12px; margin-right: 8px;" onclick="confirmDeleteSubmittedDocument(${docId})">Confirm Delete</button>
-                <button class="btn btn-primary" style="padding: 4px 12px;" onclick="cancelDeleteSubmittedDocument()">Cancel</button>
+        <div class="card" style="border-left: 6px solid var(--danger); background-color: #fff1f2; margin-bottom: 20px; padding: 15px 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0; color: var(--danger);">In-Page Deletion Confirmation Required</h4>
+                    <span style="font-size: 13px; color: #991b1b;">Are you sure you want to delete document ID <strong>#${docId}</strong>? This action will permanently remove the record and physical file from the system.</span>
+                </div>
+                <div>
+                    <button class="btn btn-danger" style="padding: 8px 16px; margin-right: 10px;" onclick="confirmDeleteSubmittedDocument(${docId})">Confirm Delete</button>
+                    <button class="btn btn-primary" style="padding: 8px 16px;" onclick="cancelDeleteSubmittedDocument()">Cancel</button>
+                </div>
             </div>
         </div>
     `;
