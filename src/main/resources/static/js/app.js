@@ -285,8 +285,12 @@ async function renderDashboardTab() {
 }
 
 async function renderPhasesTab() {
-    const dRes = await fetch('/api/sdm/documents');
+    const [dRes, tRes] = await Promise.all([
+        fetch('/api/sdm/documents'),
+        fetch('/api/sdm/templates')
+    ]);
     const docs = dRes.ok ? await dRes.json() : [];
+    const templates = tRes.ok ? await tRes.json() : [];
 
     // Inline Submission Form Section directly at the TOP
     let html = `
@@ -342,10 +346,24 @@ async function renderPhasesTab() {
     html += `<div class="phase-grid">`;
     phases.forEach(phase => {
         const phaseDocs = docs.filter(d => d.phase.id === phase.id);
+        const phaseTemplates = templates.filter(t => t.phase && t.phase.id === phase.id);
+
         html += `
             <div class="phase-frame">
                 <h3>Phase ${phase.phaseNumber}: ${phase.phaseName}</h3>
                 <p style="font-size: 12px; color: #64748b;">${phase.description}</p>
+
+                ${phaseTemplates.length > 0 ? `
+                    <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 6px; margin-top: 10px;">
+                        <h5 style="margin: 0 0 5px 0; color: #166534;">Compliance Templates & Guidelines</h5>
+                        ${phaseTemplates.map(t => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 4px;">
+                                <span><strong>${t.templateCode}:</strong> ${t.documentTitle} (v${t.versionNumber})</span>
+                                <a href="/api/sdm/templates/${t.id}/download" class="btn btn-success" style="padding: 2px 6px; font-size: 10px; text-decoration: none;">Download Template</a>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
 
                 <h4 style="margin-top: 15px;">Deliverable Documents</h4>
                 ${phaseDocs.length === 0 ? '<p style="font-size: 12px; color: #94a3b8;">No documents submitted for this phase.</p>' : `
@@ -596,17 +614,90 @@ async function renderAiAgentsTab(selectedDocId = null) {
 }
 
 async function renderAdminTab() {
-    const [cRes, uRes, rRes] = await Promise.all([
+    const [cRes, uRes, rRes, tRes] = await Promise.all([
         fetch('/api/config'),
         fetch('/api/admin/users'),
-        fetch('/api/admin/roles')
+        fetch('/api/admin/roles'),
+        fetch('/api/admin/templates')
     ]);
 
     const configs = cRes.ok ? await cRes.json() : {};
     const users = uRes.ok ? await uRes.json() : [];
     const roles = rRes.ok ? await rRes.json() : [];
+    const templates = tRes.ok ? await tRes.json() : [];
 
     document.getElementById('tab-content').innerHTML = `
+        <div class="card">
+            <h3>Document Templates Setup (Admin Only Compliance Guidelines)</h3>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 15px;">Upload official SDM compliance templates (.docx, .xlsx, .pptx, .pdf) that makers download and AI agents validate against.</p>
+
+            <form id="upload-template-form" onsubmit="handleUploadTemplate(event)" style="margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="input-group">
+                        <label>Target SDM Phase</label>
+                        <select id="tmpl-phase-id" required>
+                            ${phases.map(p => `<option value="${p.id}">Phase ${p.phaseNumber}: ${p.phaseName}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Template Code</label>
+                        <input type="text" id="tmpl-code" placeholder="e.g. TMPL-ARCH-01" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Document / Template Title</label>
+                        <input type="text" id="tmpl-title" placeholder="e.g. Architecture Specification Guidelines" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px;">
+                    <div class="input-group">
+                        <label>Version Number</label>
+                        <input type="text" id="tmpl-version" value="1.0" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Description / Guidelines Summary</label>
+                        <input type="text" id="tmpl-desc" placeholder="e.g. Mandatory structure for system architecture deliverable">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Attach Template File (.docx, .xlsx, .pptx, .xml, .pdf)</label>
+                    <input type="file" id="tmpl-file" required>
+                </div>
+
+                <button type="submit" class="btn btn-success">+ Upload Compliance Template</button>
+            </form>
+
+            <h4 style="margin-top: 20px;">Active Compliance Templates</h4>
+            ${templates.length === 0 ? '<p style="font-size: 12px; color: #94a3b8;">No compliance templates uploaded yet.</p>' : `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Template Code</th>
+                            <th>Target Phase</th>
+                            <th>Title</th>
+                            <th>Version</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${templates.map(t => `
+                            <tr>
+                                <td><strong>${t.templateCode}</strong></td>
+                                <td>Phase ${t.phase ? t.phase.phaseNumber : '-'}: ${t.phase ? t.phase.phaseName : '-'}</td>
+                                <td>${t.documentTitle}</td>
+                                <td>${t.versionNumber}</td>
+                                <td>
+                                    <a href="/api/sdm/templates/${t.id}/download" class="btn btn-primary" style="padding: 4px 8px; text-decoration: none;">Download</a>
+                                    <button class="btn btn-danger" style="padding: 4px 8px;" onclick="handleDeleteTemplate(${t.id})">Delete</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `}
+        </div>
+
         <div class="card">
             <h3>Role Management (Add / Amend / Delete System Roles & Permitted Actions)</h3>
             <form id="create-role-form" onsubmit="handleCreateRole(event)" style="margin-bottom: 20px;">
@@ -895,6 +986,57 @@ async function resetUserPassword(userId) {
     });
 
     if (res.ok) showAlert(`Password reset successfully for user ID ${userId}. Temporary password: ${newPassword}`, 'success');
+}
+
+async function handleUploadTemplate(e) {
+    e.preventDefault();
+    const phaseId = document.getElementById('tmpl-phase-id').value;
+    const templateCode = document.getElementById('tmpl-code').value;
+    const documentTitle = document.getElementById('tmpl-title').value;
+    const versionNumber = document.getElementById('tmpl-version').value;
+    const description = document.getElementById('tmpl-desc').value;
+    const fileInput = document.getElementById('tmpl-file');
+
+    if (!fileInput.files || fileInput.files.length === 0) {
+        showAlert("Please select a template file to upload.", "danger");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('phaseId', phaseId);
+    formData.append('templateCode', templateCode);
+    formData.append('documentTitle', documentTitle);
+    formData.append('versionNumber', versionNumber);
+    formData.append('description', description);
+    formData.append('file', fileInput.files[0]);
+
+    try {
+        const res = await fetch('/api/admin/templates/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (res.ok) {
+            showAlert('Compliance document template uploaded successfully!', 'success');
+            renderAdminTab();
+        } else {
+            const data = await res.json();
+            showAlert('Upload failed: ' + (data.error || 'Server error'), 'danger');
+        }
+    } catch (err) {
+        showAlert('Error uploading template: ' + err.message, 'danger');
+    }
+}
+
+async function handleDeleteTemplate(templateId) {
+    const res = await fetch(`/api/admin/templates/${templateId}`, { method: 'DELETE' });
+    if (res.ok) {
+        showAlert('Compliance template deleted successfully.', 'success');
+        renderAdminTab();
+    } else {
+        const data = await res.json();
+        showAlert('Template deletion failed: ' + (data.error || 'Server error'), 'danger');
+    }
 }
 
 async function handleLogout() {
