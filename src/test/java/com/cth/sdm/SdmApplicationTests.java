@@ -84,4 +84,18 @@ public class SdmApplicationTests {
         assertEquals("APPROVED", approvedDoc.getStatus());
         assertEquals("checker1", approvedDoc.getCheckerUsername());
     }
+
+    @Test
+    void testDocumentSoftDeletion() throws IOException {
+        MockMultipartFile mockFile = new MockMultipartFile("file", "SoftDeleteTest.pdf", "application/pdf", "Content To Delete".getBytes());
+        SdmDocument doc = sdmService.submitDocument("CTH", 1L, "Document Soft Deletion Test", "DOC-DEL-01", "1.0", "Desc", mockFile, "maker1");
+
+        Long docId = doc.getId();
+        assertNotNull(docId);
+
+        sdmService.deleteDocument(docId, "admin");
+
+        // Verify document is hidden from screen query (getDocumentsByFilter)
+        assertTrue(sdmService.getDocumentsByFilter(null, null, null).stream().noneMatch(d -> d.getId().equals(docId)));
+    }
 }

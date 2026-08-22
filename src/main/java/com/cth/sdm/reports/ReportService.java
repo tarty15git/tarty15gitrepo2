@@ -32,9 +32,9 @@ public class ReportService {
 
     public List<SdmDocument> getReportData(String statusFilter) {
         if (statusFilter != null && !statusFilter.isBlank() && !"ALL".equalsIgnoreCase(statusFilter)) {
-            return documentRepository.findByStatus(statusFilter.toUpperCase());
+            return documentRepository.findByStatusAndDeletedFalse(statusFilter.toUpperCase());
         }
-        return documentRepository.findAll();
+        return documentRepository.findByDeletedFalse();
     }
 
     public ByteArrayInputStream generatePdfReport(String statusFilter) {

@@ -48,6 +48,8 @@ public class SdmDocument {
     @Column(nullable = false, length = 30)
     private String status = "PEND"; // PEND, APPROVED, REJECTED
 
+    private boolean deleted = false;
+
     @Column(nullable = false, length = 50)
     private String makerUsername;
 
@@ -97,6 +99,9 @@ public class SdmDocument {
 
     public Long getFileSize() { return fileSize; }
     public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
+
+    public boolean isDeleted() { return deleted; }
+    public void setDeleted(boolean deleted) { this.deleted = deleted; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

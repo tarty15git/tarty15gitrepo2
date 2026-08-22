@@ -143,18 +143,12 @@ public class SdmService {
         SdmDocument doc = documentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Document not found: " + id));
 
-        // Delete physical stored file if present
-        try {
-            File file = new File(doc.getFilePath());
-            if (file.exists()) {
-                file.delete();
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to delete physical file: " + e.getMessage());
-        }
+        // Flag document as deleted so it is hidden from screens while record remains in database
+        doc.setDeleted(true);
+        doc.setUpdatedAt(LocalDateTime.now());
+        documentRepository.save(doc);
 
-        documentRepository.delete(doc);
-        auditLogRepository.save(new AuditLog("DOCUMENT_DELETED", username, "Deleted document " + doc.getDocIdCode()));
+        auditLogRepository.save(new AuditLog("DOCUMENT_DELETED", username, "Flagged document " + doc.getDocIdCode() + " for deletion"));
     }
 
     public DocumentTemplate uploadTemplate(Long phaseId, String title, String code, String version, String desc, MultipartFile file) throws IOException {
@@ -177,15 +171,15 @@ public class SdmService {
 
     public List<SdmDocument> getDocumentsByFilter(String appCode, Long phaseId, String status) {
         if (appCode != null && phaseId != null) {
-            return documentRepository.findByAppCodeAndPhaseId(appCode, phaseId);
+            return documentRepository.findByAppCodeAndPhaseIdAndDeletedFalse(appCode, phaseId);
         } else if (appCode != null) {
-            return documentRepository.findByAppCode(appCode);
+            return documentRepository.findByAppCodeAndDeletedFalse(appCode);
         } else if (phaseId != null) {
-            return documentRepository.findByPhaseId(phaseId);
+            return documentRepository.findByPhaseIdAndDeletedFalse(phaseId);
         } else if (status != null) {
-            return documentRepository.findByStatus(status);
+            return documentRepository.findByStatusAndDeletedFalse(status);
         }
-        return documentRepository.findAll();
+        return documentRepository.findByDeletedFalse();
     }
 
     private void notifyApprovers(SdmDocument doc) {
