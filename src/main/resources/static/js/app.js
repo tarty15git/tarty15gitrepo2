@@ -76,11 +76,40 @@ function showAlert(message, type = 'success') {
     const alertBox = document.getElementById('status-alert');
     if (!alertBox) return;
     alertBox.style.display = 'block';
-    alertBox.style.backgroundColor = type === 'success' ? '#dcfce7' : '#fee2e2';
-    alertBox.style.color = type === 'success' ? '#166534' : '#991b1b';
-    alertBox.style.border = `1px solid ${type === 'success' ? '#86efac' : '#fca5a5'}`;
-    alertBox.innerText = message;
+    alertBox.style.backgroundColor = type === 'success' ? '#dcfce7' : (type === 'warning' ? '#fef3c7' : '#fee2e2');
+    alertBox.style.color = type === 'success' ? '#166534' : (type === 'warning' ? '#92400e' : '#991b1b');
+    alertBox.style.border = `1px solid ${type === 'success' ? '#86efac' : (type === 'warning' ? '#fde68a' : '#fca5a5')}`;
+    alertBox.innerHTML = message;
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showDeleteConfirmationBanner(docId) {
+    const confirmHtml = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><strong>Confirmation Required:</strong> Are you sure you want to delete document ID #${docId}? This action cannot be undone.</span>
+            <div>
+                <button class="btn btn-danger" style="padding: 4px 12px; margin-right: 8px;" onclick="confirmDeleteSubmittedDocument(${docId})">Confirm Delete</button>
+                <button class="btn btn-primary" style="padding: 4px 12px;" onclick="cancelDeleteSubmittedDocument()">Cancel</button>
+            </div>
+        </div>
+    `;
+    showAlert(confirmHtml, 'warning');
+}
+
+function cancelDeleteSubmittedDocument() {
+    const alertBox = document.getElementById('status-alert');
+    if (alertBox) alertBox.style.display = 'none';
+}
+
+async function confirmDeleteSubmittedDocument(docId) {
+    const res = await fetch(`/api/sdm/documents/${docId}`, { method: 'DELETE' });
+    if (res.ok) {
+        showAlert('Submitted document deleted successfully.', 'success');
+        refreshCurrentTab();
+    } else {
+        const data = await res.json();
+        showAlert('Failed to delete document: ' + (data.error || 'Server error'), 'danger');
+    }
 }
 
 async function renderAppView() {
@@ -711,14 +740,7 @@ async function deleteUserAccount(userId) {
 }
 
 async function handleDeleteSubmittedDocument(docId) {
-    const res = await fetch(`/api/sdm/documents/${docId}`, { method: 'DELETE' });
-    if (res.ok) {
-        showAlert('Submitted document deleted successfully.', 'success');
-        refreshCurrentTab();
-    } else {
-        const data = await res.json();
-        showAlert('Failed to delete document: ' + (data.error || 'Server error'), 'danger');
-    }
+    showDeleteConfirmationBanner(docId);
 }
 
 async function toggleUserLock(userId) {
