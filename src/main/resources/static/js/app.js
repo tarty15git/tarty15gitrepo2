@@ -210,7 +210,7 @@ async function renderDashboardTab() {
     const dRes = await fetch('/api/sdm/documents');
     const docs = dRes.ok ? await dRes.json() : [];
 
-    const pending = docs.filter(d => d.status === 'PENDING_APPROVAL').length;
+    const pending = docs.filter(d => d.status === 'PEND' || d.status === 'PENDING_APPROVAL').length;
     const approved = docs.filter(d => d.status === 'APPROVED').length;
     const rejected = docs.filter(d => d.status === 'REJECTED').length;
 
@@ -257,7 +257,7 @@ async function renderDashboardTab() {
                             <td>${d.phase.phaseName}</td>
                             <td>${d.documentTitle}</td>
                             <td>${d.versionNumber}</td>
-                            <td><span class="badge badge-${d.status.toLowerCase().replace('_approval', '')}">${d.status}</span></td>
+                            <td><span class="badge badge-${d.status.toLowerCase()}">${d.status}</span></td>
                             <td>${d.makerUsername}</td>
                             <td>
                                 <button class="btn btn-primary" style="padding: 4px 8px;" onclick="openInAppDocumentViewer(${d.id}, '${d.documentTitle.replace(/'/g, "\\'")}')">View Doc</button>
@@ -418,7 +418,12 @@ async function handleInlineSubmit(event) {
 
 async function renderApprovalsTab() {
     const res = await fetch('/api/sdm/documents?status=PENDING_APPROVAL');
-    const docs = res.ok ? await res.json() : [];
+    let docs = res.ok ? await res.json() : [];
+    if (docs.length === 0) {
+        const allRes = await fetch('/api/sdm/documents');
+        const allDocs = allRes.ok ? await allRes.json() : [];
+        docs = allDocs.filter(d => d.status === 'PEND' || d.status === 'PENDING_APPROVAL');
+    }
 
     document.getElementById('tab-content').innerHTML = `
         <div class="card">

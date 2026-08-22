@@ -117,7 +117,7 @@ th {
     color: white;
 }
 
-.badge-pending { background-color: var(--warning); }
+.badge-pending, .badge-pend { background-color: var(--warning); }
 .badge-approved { background-color: var(--success); }
 .badge-rejected { background-color: var(--danger); }
 

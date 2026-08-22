@@ -64,7 +64,7 @@ CREATE TABLE sdm_documents (
     file_path VARCHAR2(500) NOT NULL,
     file_type VARCHAR2(20),
     file_size NUMBER(19),
-    status VARCHAR2(30) DEFAULT 'PENDING_APPROVAL' NOT NULL,
+    status VARCHAR2(30) DEFAULT 'PEND' NOT NULL,
     maker_username VARCHAR2(50) NOT NULL,
     checker_username VARCHAR2(50),
     remarks VARCHAR2(1000),

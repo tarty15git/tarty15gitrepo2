@@ -80,7 +80,7 @@ BEGIN
         file_path VARCHAR(500) NOT NULL,
         file_type VARCHAR(20),
         file_size BIGINT,
-        status VARCHAR(30) DEFAULT 'PENDING_APPROVAL' NOT NULL,
+        status VARCHAR(30) DEFAULT 'PEND' NOT NULL,
         maker_username VARCHAR(50) NOT NULL,
         checker_username VARCHAR(50),
         remarks VARCHAR(1000),

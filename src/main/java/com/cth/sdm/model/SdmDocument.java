@@ -46,7 +46,7 @@ public class SdmDocument {
     private Long fileSize;
 
     @Column(nullable = false, length = 30)
-    private String status = "PENDING_APPROVAL";
+    private String status = "PEND"; // PEND, APPROVED, REJECTED
 
     @Column(nullable = false, length = 50)
     private String makerUsername;

@@ -76,7 +76,7 @@ public class SdmApplicationTests {
         );
 
         assertNotNull(doc.getId());
-        assertEquals("PENDING_APPROVAL", doc.getStatus());
+        assertEquals("PEND", doc.getStatus());
         assertTrue(doc.getDocIdCode().startsWith("CTH-P1-"));
 
         // Process Maker-Checker Approval

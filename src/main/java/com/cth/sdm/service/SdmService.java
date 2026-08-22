@@ -100,7 +100,7 @@ public class SdmService {
         doc.setFilePath(targetPath.toString());
         doc.setFileType(file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1));
         doc.setFileSize(file.getSize());
-        doc.setStatus("PENDING_APPROVAL");
+        doc.setStatus("PEND");
         doc.setMakerUsername(makerUsername);
 
         SdmDocument saved = documentRepository.save(doc);
@@ -116,8 +116,8 @@ public class SdmService {
         SdmDocument doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Document not found: " + documentId));
 
-        if (!"PENDING_APPROVAL".equals(doc.getStatus())) {
-            throw new IllegalStateException("Document is not in PENDING_APPROVAL status");
+        if (!"PEND".equals(doc.getStatus())) {
+            throw new IllegalStateException("Document is not in PEND status");
         }
 
         if ("APPROVE".equalsIgnoreCase(action)) {
