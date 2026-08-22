@@ -26,6 +26,12 @@ public class AgentOrchestratorService {
         SdmDocument doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Document not found: " + documentId));
 
+        // Clear existing reviews for this document before running a new pipeline execution
+        List<AgentReview> existingReviews = agentReviewRepository.findByDocumentIdOrderByTimestampAsc(documentId);
+        if (!existingReviews.isEmpty()) {
+            agentReviewRepository.deleteAll(existingReviews);
+        }
+
         List<AgentReview> reviews = new ArrayList<>();
 
         AgentReview processor = runDocumentProcessorAgent(doc);

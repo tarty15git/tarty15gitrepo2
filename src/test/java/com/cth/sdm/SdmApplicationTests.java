@@ -25,6 +25,9 @@ public class SdmApplicationTests {
     private UserService userService;
 
     @Autowired
+    private com.cth.sdm.ai.AgentOrchestratorService agentOrchestratorService;
+
+    @Autowired
     private SdmService sdmService;
 
     @Autowired

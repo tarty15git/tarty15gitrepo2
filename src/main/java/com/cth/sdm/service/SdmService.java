@@ -139,6 +139,24 @@ public class SdmService {
         return saved;
     }
 
+    public void deleteDocument(Long id, String username) {
+        SdmDocument doc = documentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Document not found: " + id));
+
+        // Delete physical stored file if present
+        try {
+            File file = new File(doc.getFilePath());
+            if (file.exists()) {
+                file.delete();
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to delete physical file: " + e.getMessage());
+        }
+
+        documentRepository.delete(doc);
+        auditLogRepository.save(new AuditLog("DOCUMENT_DELETED", username, "Deleted document " + doc.getDocIdCode()));
+    }
+
     public DocumentTemplate uploadTemplate(Long phaseId, String title, String code, String version, String desc, MultipartFile file) throws IOException {
         SdmPhase phase = phaseRepository.findById(phaseId)
                 .orElseThrow(() -> new IllegalArgumentException("Phase not found: " + phaseId));

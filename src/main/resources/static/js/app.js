@@ -1,6 +1,7 @@
 let currentUser = null;
 let phases = [];
 let applications = [];
+let currentTabName = 'dashboard';
 
 document.addEventListener("DOMContentLoaded", () => {
     checkCurrentUser();
@@ -127,6 +128,7 @@ async function loadInitialData() {
 }
 
 function switchTab(tabName, btn) {
+    currentTabName = tabName;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
 
@@ -136,6 +138,15 @@ function switchTab(tabName, btn) {
     else if (tabName === 'reports') renderReportsTab();
     else if (tabName === 'ai-agents') renderAiAgentsTab();
     else if (tabName === 'admin') renderAdminTab();
+}
+
+function refreshCurrentTab() {
+    if (currentTabName === 'dashboard') renderDashboardTab();
+    else if (currentTabName === 'phases') renderPhasesTab();
+    else if (currentTabName === 'approvals') renderApprovalsTab();
+    else if (currentTabName === 'reports') renderReportsTab();
+    else if (currentTabName === 'ai-agents') renderAiAgentsTab();
+    else if (currentTabName === 'admin') renderAdminTab();
 }
 
 function openInAppDocumentViewer(docId, docTitle) {
@@ -218,6 +229,7 @@ async function renderDashboardTab() {
                                 <button class="btn btn-primary" style="padding: 4px 8px;" onclick="openInAppDocumentViewer(${d.id}, '${d.documentTitle.replace(/'/g, "\\'")}')">View Doc</button>
                                 <a href="/api/sdm/documents/${d.id}/download" class="btn btn-success" style="padding: 4px 8px; text-decoration: none;">Download</a>
                                 <button class="btn btn-primary" style="padding: 4px 8px;" onclick="triggerAiReview(${d.id})">AI Review</button>
+                                <button class="btn btn-danger" style="padding: 4px 8px;" onclick="handleDeleteSubmittedDocument(${d.id})">Delete</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -312,6 +324,7 @@ async function renderPhasesTab() {
                                     <td>
                                         <button class="btn btn-primary" style="padding: 2px 6px; font-size: 11px;" onclick="openInAppDocumentViewer(${d.id}, '${d.documentTitle.replace(/'/g, "\\'")}')">View</button>
                                         <a href="/api/sdm/documents/${d.id}/download" class="btn btn-success" style="padding: 2px 6px; text-decoration: none; font-size: 11px;">Download</a>
+                                        <button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="handleDeleteSubmittedDocument(${d.id})">Delete</button>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -402,6 +415,7 @@ async function renderApprovalsTab() {
                                 <a href="/api/sdm/documents/${d.id}/download" class="btn btn-success" style="padding: 4px 8px; text-decoration: none;">Download</a>
                                 <button class="btn btn-success" onclick="processApprovalAction(${d.id}, 'APPROVE')">Approve</button>
                                 <button class="btn btn-danger" onclick="processApprovalAction(${d.id}, 'REJECT')">Reject</button>
+                                <button class="btn btn-danger" onclick="handleDeleteSubmittedDocument(${d.id})">Delete</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -693,6 +707,17 @@ async function deleteUserAccount(userId) {
     } else {
         const data = await res.json();
         showAlert('Delete failed: ' + data.error, 'danger');
+    }
+}
+
+async function handleDeleteSubmittedDocument(docId) {
+    const res = await fetch(`/api/sdm/documents/${docId}`, { method: 'DELETE' });
+    if (res.ok) {
+        showAlert('Submitted document deleted successfully.', 'success');
+        refreshCurrentTab();
+    } else {
+        const data = await res.json();
+        showAlert('Failed to delete document: ' + (data.error || 'Server error'), 'danger');
     }
 }
 

@@ -94,6 +94,16 @@ public class SdmController {
         return ResponseEntity.ok(approvalRepository.findByDocumentIdOrderByTimestampDesc(id));
     }
 
+    @DeleteMapping("/documents/{id}")
+    public ResponseEntity<?> deleteDocument(@PathVariable Long id, Authentication auth) {
+        try {
+            sdmService.deleteDocument(id, auth.getName());
+            return ResponseEntity.ok(Map.of("status", "SUCCESS", "message", "Document deleted successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/documents/{id}/download")
     public ResponseEntity<org.springframework.core.io.Resource> downloadDocument(@PathVariable Long id) throws java.io.IOException {
         SdmDocument doc = sdmService.getDocumentsByFilter(null, null, null).stream()
