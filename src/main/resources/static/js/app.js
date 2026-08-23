@@ -4,8 +4,24 @@ let applications = [];
 let currentTabName = 'dashboard';
 
 document.addEventListener("DOMContentLoaded", () => {
+    loadSavedTheme();
     checkCurrentUser();
 });
+
+function applyColorTheme(themeName) {
+    if (!themeName || themeName === 'default') {
+        document.body.removeAttribute('data-theme');
+        localStorage.setItem('sdme_theme', 'default');
+    } else {
+        document.body.setAttribute('data-theme', themeName);
+        localStorage.setItem('sdme_theme', themeName);
+    }
+}
+
+function loadSavedTheme() {
+    const savedTheme = localStorage.getItem('sdme_theme') || 'default';
+    applyColorTheme(savedTheme);
+}
 
 async function checkCurrentUser() {
     try {
@@ -626,7 +642,24 @@ async function renderAdminTab() {
     const roles = rRes.ok ? await rRes.json() : [];
     const templates = tRes.ok ? await tRes.json() : [];
 
+    const currentTheme = localStorage.getItem('sdme_theme') || 'default';
+
     document.getElementById('tab-content').innerHTML = `
+        <div class="card">
+            <h3>UI Color Theme Configuration</h3>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 15px;">Select and apply the system interface color palette.</p>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <label style="font-size: 13px; font-weight: 600;">System Palette Theme:</label>
+                <select id="theme-selector" onchange="applyColorTheme(this.value)" style="padding: 8px; border-radius: 4px; border: 1px solid var(--border); width: 220px;">
+                    <option value="default" ${currentTheme === 'default' ? 'selected' : ''}>Default (Navy Blue)</option>
+                    <option value="emerald" ${currentTheme === 'emerald' ? 'selected' : ''}>Emerald (Forest Green)</option>
+                    <option value="purple" ${currentTheme === 'purple' ? 'selected' : ''}>Purple (Royal Violet)</option>
+                    <option value="sunset" ${currentTheme === 'sunset' ? 'selected' : ''}>Sunset (Deep Amber)</option>
+                    <option value="dark" ${currentTheme === 'dark' ? 'selected' : ''}>Dark (Slate Charcoal)</option>
+                </select>
+            </div>
+        </div>
+
         <div class="card">
             <h3>Document Templates Setup (Admin Only Compliance Guidelines)</h3>
             <p style="font-size: 12px; color: #64748b; margin-bottom: 15px;">Upload official SDM compliance templates (.docx, .xlsx, .pptx, .pdf) that makers download and AI agents validate against.</p>
